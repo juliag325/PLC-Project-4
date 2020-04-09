@@ -1,3 +1,5 @@
+:- dynamic 
+    gvar/2.
 /* match functions by unifying with arguments 
     and infering the result
 */
@@ -25,11 +27,36 @@ typeExpList([Hin|Tin], [Hout|Tout]):-
     Example:
         gvLet(v, T, int) ~ let v = 3;
  */
-typeStatement(gvLet(Name, T, Code), unit):-
+typeStatement(gvLet(Name, T, Code), unit):- 
     atom(Name), /* make sure we have a bound name */
     typeExp(Code, T), /* infer the type of Code and ensure it is T */
     bType(T), /* make sure we have an infered type */
     asserta(gvar(Name, T)). /* add definition to database */
+typeStatement(gfLet(Name, Args, Code), unit):- /*match code to args*/
+    asserta(gvar(Name, Args)). 
+/* typeCode([ifThen(bexp(Z,W),[gvLet(mult, T, iplus(X,Y))])],T1).
+   typeStatement(ifThen(bexp(X,Y), [gvLet(mult, T, iplus(Z,W))]), unit).*/
+typeStatement(ifThen(CodeB, T, Code1), unit):-
+    typeExp(CodeB,T),
+    T = boolean,
+    is_list(Code1),
+    typeCode(Code1, _T1).
+typeStatement(forLoop(Name, T, CodeS, CodeE, Code), unit):- /*local var?*/
+    atom(Name), 
+    typeExp(CodeS, T),
+    typeExp(CodeE, T), 
+    T = int,
+    is_list(Code),
+    typeCode(Code, _T1).
+typeStatement(exp(Code), T):-
+    typeExp(Code, T),
+    bType(T).
+typeStatement(letinV(Name, T, Code), unit):- /*function and var LOCAL*/
+    atom(Name), 
+    typeExp(Code, T),
+    bType(T) /*store in local*/.
+
+
 
 /* Code is simply a list of statements. The type is 
     the type of the last statement 
@@ -51,6 +78,7 @@ infer(Code, T) :-
 bType(int).
 bType(float).
 bType(string).
+bType(boolean).
 bType(unit). /* unit type for things that are not expressions */
 /*  functions type.
     The type is a list, the last element is the return type
@@ -89,6 +117,8 @@ fType(iplus, [int,int,int]).
 fType(fplus, [float, float, float]).
 fType(fToInt, [float,int]).
 fType(iToFloat, [int,float]).
+fType(bexp, [boolean, boolean, boolean]).
+fType(relexp, [int, int, boolean]).
 fType(print, [_X, unit]). /* simple print */
 
 /* Find function signature
