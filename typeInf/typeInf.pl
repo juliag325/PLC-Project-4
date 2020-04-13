@@ -96,36 +96,41 @@ typeStatement(gvLet(Name, T, Code), unit):-
     typeExp(Code, T), /* infer the type of Code and ensure it is T */
     bType(T), /* make sure we have an infered type */
     asserta(gvar(Name, T)). /* add definition to database */
-typeStatement(gfLet(Name, Args, Code), unit):- /*match code to args*/
-    asserta(gvar(Name, Args)). 
-/* typeCode([ifThen(bexp(Z,W),[gvLet(mult, T, iplus(X,Y))])],T1).
-   typeStatement(ifThen(bexp(X,Y), [gvLet(mult, T, iplus(Z,W))]), unit).*/
+/*typeStatement(gfLet(hi, [a,b,c], [gvLet(mult, T, (2+5)), exp(2+4)]), T1).*/
+typeStatement(gfLet(Name, Args, Code), T):- /*match code to args*/
+    atom(Name),
+    is_list(Code),
+    typeCode(Code, T),
+    bType(T),
+    asserta(gvar(Name, T)). 
 /*typeStatement(if((3 < 10),[gvLet(mult, T, iplus(X,Y))],[gvLet(mult, T, iplus(X,Y))]), T1).*/
 typeStatement(if(Cond, TrueB, FalseB), T) :-
     typeBoolExp(Cond),
     typeCode(TrueB, T),
     typeCode(FalseB, T).
-typeStatement(forLoop(Name, CodeS, CodeE, Code), T1):- /*local var?*/
+/*typeStatement(for(i, 5+6, 7-9, [gvLet(mult, T, iplus(X,Y))]), T1).*/
+typeStatement(for(Name, CodeS, CodeE, Code), T):- /*local var?*/
     atom(Name), 
-    typeExp(CodeS, T),
-    typeExp(CodeE, T), 
-    hasInt(T),
+    typeExp(CodeS, T1),
+    typeExp(CodeE, T1), 
+    hasInt(T1),
     is_list(Code),
-    typeCode(Code, T1).
+    typeCode(Code, T).
 /*typeStatement(exp(2+4),T).*/
 typeStatement(exp(Code), T):-
     typeExp(Code, T),
     bType(T).
-typeStatement(letinV(Name, T, Code), unit):- /*function and var LOCAL*/
+typeStatement(letin(Name, T, CodeE, Code), unit):- /*function and var LOCAL*/
     atom(Name), 
     typeExp(Code, T),
-    bType(T) /*store in local*/.
+    bType(T). /*store in local*/.
 
 
 
 /* Code is simply a list of statements. The type is 
     the type of the last statement 
 */
+/*typeCode([gfLet(hi, [a,b,c], [gvLet(mult, T, (2+5)), exp(2+4)]), exp(9 < 3), gfLet(hi, [a,b], [gvLet(mult, T, (2+5)), exp(5 < 9)])], T1).*/
 typeCode([S], T):-typeStatement(S, T).
 typeCode([S, S2|Code], T):-
     typeStatement(S,_T),
