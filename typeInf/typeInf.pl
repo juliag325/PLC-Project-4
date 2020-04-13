@@ -3,6 +3,15 @@
 /* match functions by unifying with arguments 
     and infering the result
 */
+typeExp(X, int) :-
+    integer(X).
+
+typeExp(X, float) :-
+    float(X).
+
+typeExp(X, bool) :-
+    typeBoolExp(X).
+
 typeExp(Fct, T):-
     \+ var(Fct), /* make sure Fct is not a variable */ 
     \+ atom(Fct), /* or an atom */
@@ -22,11 +31,30 @@ typeExpList([Hin|Tin], [Hout|Tout]):-
     typeExp(Hin, Hout), /* type infer the head */
     typeExpList(Tin, Tout). /* recurse */
 
+
+hasComparison(int).
+hasComparison(float).
+hasComparison(string).
+
+hasAdd(int).
+hasAdd(float).
+
+/* predicate to infer types for boolean expressions */
+typeBoolExp(true).
+typeBoolExp(false). 
+typeBoolExp( X < Y) :- 
+    typeExp(X, T),
+    typeExp(Y, T),
+    hasComparison(T).
+
 /* TODO: add statements types and their type checking */
 /* global variable definition
     Example:
         gvLet(v, T, int) ~ let v = 3;
  */
+typeStatement(X, T) :-
+    typeExp(X, T).
+
 typeStatement(gvLet(Name, T, Code), unit):- 
     atom(Name), /* make sure we have a bound name */
     typeExp(Code, T), /* infer the type of Code and ensure it is T */
@@ -36,18 +64,18 @@ typeStatement(gfLet(Name, Args, Code), unit):- /*match code to args*/
     asserta(gvar(Name, Args)). 
 /* typeCode([ifThen(bexp(Z,W),[gvLet(mult, T, iplus(X,Y))])],T1).
    typeStatement(ifThen(bexp(X,Y), [gvLet(mult, T, iplus(Z,W))]), unit).*/
-typeStatement(ifThen(CodeB, T, Code1), unit):-
-    typeExp(CodeB,T),
-    T = boolean,
-    is_list(Code1),
-    typeCode(Code1, _T1).
-typeStatement(forLoop(Name, T, CodeS, CodeE, Code), unit):- /*local var?*/
+/*typeStatement(if((3 < 10),[gvLet(mult, T, iplus(X,Y))],[gvLet(mult, T, iplus(X,Y))]), T1).*/
+typeStatement(if(Cond, TrueB, FalseB), T) :-
+    typeBoolExp(Cond),
+    typeCode(TrueB, T),
+    typeCode(FalseB, T).
+typeStatement(forLoop(Name, T, CodeS, CodeE, Code), T1):- /*local var?*/
     atom(Name), 
     typeExp(CodeS, T),
     typeExp(CodeE, T), 
     T = int,
     is_list(Code),
-    typeCode(Code, _T1).
+    typeCode(Code, T1).
 typeStatement(exp(Code), T):-
     typeExp(Code, T),
     bType(T).
@@ -115,6 +143,7 @@ deleteGVars():-retractall(gvar), asserta(gvar(_X,_Y):-false()).
 
 fType(iplus, [int,int,int]).
 fType(fplus, [float, float, float]).
+fType((+), [T, T, T]) :- hasAdd(T).
 fType(fToInt, [float,int]).
 fType(iToFloat, [int,float]).
 fType(bexp, [boolean, boolean, boolean]).
