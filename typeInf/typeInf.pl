@@ -38,47 +38,50 @@ hasComparison(string).
 
 hasBoolean(bool).
 
+hasInt(int).
+
 hasAdd(int).
 hasAdd(float).
 
 /* predicate to infer types for boolean expressions */
 typeBoolExp(true).
 typeBoolExp(false). 
-typeBoolExp( X < Y) :- 
+typeBoolExp( X >= Y) :-
     typeExp(X, T),
     typeExp(Y, T),
     hasComparison(T).
-typeBoolExp( X > Y) :- 
+typeBoolExp(X < Y) :- 
     typeExp(X, T),
     typeExp(Y, T),
     hasComparison(T).
-typeBoolExp( X <= Y) :- 
+typeBoolExp(X > Y) :- 
     typeExp(X, T),
     typeExp(Y, T),
     hasComparison(T).
-typeBoolExp( X >= Y) :- 
+typeBoolExp( X =< Y) :- 
     typeExp(X, T),
     typeExp(Y, T),
     hasComparison(T).
-typeBoolExp( X = Y) :- 
+typeBoolExp( X == Y) :- 
     typeExp(X, T),
     typeExp(Y, T),
     hasComparison(T).
-typeBoolExp( X <> Y) :- 
+typeBoolExp( not(X) ) :- 
+    typeExp(X, T),
+    hasBoolean(T).
+typeBoolExp( X \== Y) :- 
     typeExp(X, T),
     typeExp(Y, T),
     hasComparison(T).
-typeBoolExp( X && Y) :- 
+typeBoolExp( X , Y) :- 
     typeExp(X, T),
     typeExp(Y, T),
     hasBoolean(T).
-typeBoolExp( X || Y) :- 
+typeBoolExp( X ; Y) :- 
     typeExp(X, T),
     typeExp(Y, T),
     hasBoolean(T).
-typeBoolExp( not X ) :- 
-    typeExp(X, T),
-    hasBoolean(T).
+
 
 /* TODO: add statements types and their type checking */
 /* global variable definition
@@ -102,13 +105,14 @@ typeStatement(if(Cond, TrueB, FalseB), T) :-
     typeBoolExp(Cond),
     typeCode(TrueB, T),
     typeCode(FalseB, T).
-typeStatement(forLoop(Name, T, CodeS, CodeE, Code), T1):- /*local var?*/
+typeStatement(forLoop(Name, CodeS, CodeE, Code), T1):- /*local var?*/
     atom(Name), 
     typeExp(CodeS, T),
     typeExp(CodeE, T), 
-    T = int,
+    hasInt(T),
     is_list(Code),
     typeCode(Code, T1).
+/*typeStatement(exp(2+4),T).*/
 typeStatement(exp(Code), T):-
     typeExp(Code, T),
     bType(T).
@@ -176,11 +180,18 @@ deleteGVars():-retractall(gvar), asserta(gvar(_X,_Y):-false()).
 
 fType(iplus, [int,int,int]).
 fType(fplus, [float, float, float]).
-fType((+), [T, T, T]) :- hasAdd(T).
+fType(+, [T, T, T]) :- hasAdd(T).
+fType(iminus, [int,int,int]).
+fType(fminus, [float, float, float]).
+fType(-, [T, T, T]) :- hasAdd(T).
+fType(imult, [int,int,int]).
+fType(fmult, [float, float, float]).
+fType(*, [T, T, T]) :- hasAdd(T).
+fType(idiv, [int,int,int]).
+fType(fdiv, [float, float, float]).
+fType(/, [T, T, T]) :- hasAdd(T).
 fType(fToInt, [float,int]).
 fType(iToFloat, [int,float]).
-fType(bexp, [bool, bool, bool]).
-fType(relexp, [int, int, bool]).
 fType(print, [_X, unit]). /* simple print */
 
 /* Find function signature
