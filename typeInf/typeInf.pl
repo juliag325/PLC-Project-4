@@ -36,6 +36,8 @@ hasComparison(int).
 hasComparison(float).
 hasComparison(string).
 
+hasBoolean(bool).
+
 hasAdd(int).
 hasAdd(float).
 
@@ -46,6 +48,37 @@ typeBoolExp( X < Y) :-
     typeExp(X, T),
     typeExp(Y, T),
     hasComparison(T).
+typeBoolExp( X > Y) :- 
+    typeExp(X, T),
+    typeExp(Y, T),
+    hasComparison(T).
+typeBoolExp( X <= Y) :- 
+    typeExp(X, T),
+    typeExp(Y, T),
+    hasComparison(T).
+typeBoolExp( X >= Y) :- 
+    typeExp(X, T),
+    typeExp(Y, T),
+    hasComparison(T).
+typeBoolExp( X = Y) :- 
+    typeExp(X, T),
+    typeExp(Y, T),
+    hasComparison(T).
+typeBoolExp( X <> Y) :- 
+    typeExp(X, T),
+    typeExp(Y, T),
+    hasComparison(T).
+typeBoolExp( X && Y) :- 
+    typeExp(X, T),
+    typeExp(Y, T),
+    hasBoolean(T).
+typeBoolExp( X || Y) :- 
+    typeExp(X, T),
+    typeExp(Y, T),
+    hasBoolean(T).
+typeBoolExp( not X ) :- 
+    typeExp(X, T),
+    hasBoolean(T).
 
 /* TODO: add statements types and their type checking */
 /* global variable definition
@@ -106,7 +139,7 @@ infer(Code, T) :-
 bType(int).
 bType(float).
 bType(string).
-bType(boolean).
+bType(bool).
 bType(unit). /* unit type for things that are not expressions */
 /*  functions type.
     The type is a list, the last element is the return type
@@ -146,8 +179,8 @@ fType(fplus, [float, float, float]).
 fType((+), [T, T, T]) :- hasAdd(T).
 fType(fToInt, [float,int]).
 fType(iToFloat, [int,float]).
-fType(bexp, [boolean, boolean, boolean]).
-fType(relexp, [int, int, boolean]).
+fType(bexp, [bool, bool, bool]).
+fType(relexp, [int, int, bool]).
 fType(print, [_X, unit]). /* simple print */
 
 /* Find function signature
