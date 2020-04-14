@@ -3,12 +3,15 @@
 /* match functions by unifying with arguments 
     and infering the result
 */
+/*int type*/
 typeExp(X, int) :-
     integer(X).
 
+/*float type*/
 typeExp(X, float) :-
     float(X).
 
+/*bool type*/
 typeExp(X, bool) :-
     typeBoolExp(X).
 

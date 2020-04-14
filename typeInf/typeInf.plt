@@ -11,6 +11,27 @@
 % tests for typeExp
 test(typeExp_iplus) :- 
     typeExp(iplus(int,int), int).
+    
+test(typeExp_fplus) :-
+    typeExp(fplus(float,float), float).
+
+test(typeExp_iminus) :-
+    typeExp(iminus(int, int), int).
+
+test(typeExp_fminus) :-
+    typeExp(fminus(float, float), float).
+
+test(typeExp_imult) :-
+    typeExp(imult(int,int), int). 
+
+test(typeExp_fmult) :-
+    typeExp(fmult(float,float), float). 
+
+test(typeExp_idiv) :- 
+    typeExp(idiv(int, int), int). 
+
+test(typeExp_fdiv) :- 
+    typeExp(fdiv(float, float), float). 
 
 % this test should fail
 test(typeExp_iplus_F, [fail]) :-
@@ -18,6 +39,7 @@ test(typeExp_iplus_F, [fail]) :-
 
 test(typeExp_iplus_T, [true(T == int)]) :-
     typeExp(iplus(int, int), T).
+
 
 % NOTE: use nondet as option to test if the test is nondeterministic
 
