@@ -3,13 +3,13 @@
 /* match functions by unifying with arguments 
     and infering the result
 */
-/*int type*/
-typeExp(X, int) :-
-    integer(X).
-
 /*float type*/
 typeExp(X, float) :-
     float(X).
+
+/*int type*/
+typeExp(X, int) :-
+    integer(X).
 
 /*bool type*/
 typeExp(X, bool) :-
@@ -43,8 +43,9 @@ hasBoolean(bool).
 
 hasInt(int).
 
-hasAdd(int).
 hasAdd(float).
+hasAdd(int).
+
 
 /* predicate to infer types for boolean expressions */
 typeBoolExp(true).
@@ -85,7 +86,6 @@ typeBoolExp( X ; Y) :-
     typeExp(Y, T),
     hasBoolean(T).
 
-
 /* TODO: add statements types and their type checking */
 /* global variable definition
     Example:
@@ -103,9 +103,11 @@ typeStatement(gvLet(Name, T, Code), unit):-
 typeStatement(gfLet(Name, Args, Code), T):- /*match code to args*/
     atom(Name),
     is_list(Code),
+    is_list(Args),
     typeCode(Code, T),
     bType(T),
-    asserta(gvar(Name, T)). 
+    append(TArgs, [T], RArgs),
+    asserta(gvar(Name, RArgs)). 
 /*typeStatement(if((3 < 10),[gvLet(mult, T, iplus(X,Y))],[gvLet(mult, T, iplus(X,Y))]), T1).*/
 typeStatement(if(Cond, TrueB, FalseB), T) :-
     typeBoolExp(Cond),
@@ -126,7 +128,7 @@ typeStatement(exp(Code), T):-
 typeStatement(letin(Name, T, CodeE, Code), unit):- /*function and var LOCAL*/
     atom(Name), 
     typeExp(Code, T),
-    bType(T). /*store in local*/.
+    bType(T). /*store in local*/
 
 
 
@@ -186,18 +188,18 @@ deleteGVars():-retractall(gvar), asserta(gvar(_X,_Y):-false()).
     TODO: add more functions
 */
 
-fType(iplus, [int,int,int]).
-fType(fplus, [float, float, float]).
-fType(+, [T, T, T]) :- hasAdd(T).
-fType(iminus, [int,int,int]).
-fType(fminus, [float, float, float]).
-fType(-, [T, T, T]) :- hasAdd(T).
-fType(imult, [int,int,int]).
-fType(fmult, [float, float, float]).
-fType(*, [T, T, T]) :- hasAdd(T).
-fType(idiv, [int,int,int]).
-fType(fdiv, [float, float, float]).
-fType(/, [T, T, T]) :- hasAdd(T).
+fType(+, [T, T, T]) :- 
+    hasAdd(int) ;
+    hasAdd(float).
+fType(-, [T, T, T]) :- 
+    hasAdd(int);
+    hasAdd(float).
+fType(*, [T, T, T]) :- 
+    hasAdd(int);
+    hasAdd(float).
+fType(/, [T, T, T]) :- 
+    hasAdd(int);
+    hasAdd(float).
 fType(fToInt, [float,int]).
 fType(iToFloat, [int,float]).
 fType(print, [_X, unit]). /* simple print */
