@@ -77,11 +77,11 @@ typeBoolExp( X \== Y) :-
     typeExp(X, T),
     typeExp(Y, T),
     hasComparison(T).
-typeBoolExp( X , Y) :- 
+typeBoolExp( X ; Y) :- 
     typeExp(X, T),
     typeExp(Y, T),
     hasBoolean(T).
-typeBoolExp( X ; Y) :- 
+typeBoolExp( X , Y) :- 
     typeExp(X, T),
     typeExp(Y, T),
     hasBoolean(T).
@@ -104,10 +104,9 @@ typeStatement(gfLet(Name, Args, Code), T):- /*match code to args*/
     atom(Name),
     is_list(Code),
     is_list(Args),
-    typeCode(Code, T),
-    bType(T),
-    append(TArgs, [T], RArgs),
-    asserta(gvar(Name, RArgs)). 
+    typeCodeFunc(Code, Args,[],ReturnT, T0),
+    append(T0,[ReturnT],T),
+    asserta(gvar(Name, T)). 
 /*typeStatement(if((3 < 10),[gvLet(mult, T, iplus(X,Y))],[gvLet(mult, T, iplus(X,Y))]), T1).*/
 typeStatement(if(Cond, TrueB, FalseB), T) :-
     typeBoolExp(Cond),
@@ -129,8 +128,6 @@ typeStatement(letin(Name, T, CodeE, Code), unit):- /*function and var LOCAL*/
     atom(Name), 
     typeExp(Code, T),
     bType(T). /*store in local*/
-
-
 
 /* Code is simply a list of statements. The type is 
     the type of the last statement 
@@ -220,3 +217,144 @@ functionType(Name, Args) :-
 
 % This gets wiped out but we have it here to make the linter happy
 gvar(_, _) :- false().
+
+
+typeCodeFunc([], _Args,Tc,_ReturnT, T):- T = Tc.
+typeCodeFunc([S], Args,Tc,ReturnT, T):- 
+    typeStatementFunc(S, Args,Tc,ReturnT, T).
+typeCodeFunc([S, S2|Code], Args,Tc,ReturnT, T):-
+    typeStatementFunc(S, Args,Tc,ReturnT, T1),
+    typeCodeFunc([S2|Code], Args,T1,ReturnT, [T1|T]).
+
+typeStatementFunc(X,Args,Tc,ReturnT, T) :-
+    typeExpFunc(X,Args,Tc,ReturnT, T).
+/*typeStatement(gfLet(hi, [2.2,4.5,c], [if(c < 2, [exp(2.2+4.5)],[])]), T1).*/
+typeStatementFunc(if(Cond, TrueB, FalseB),Args,Tc,ReturnT, T) :-
+    typeBoolExpFunc(Cond, Args,Tc,_RetT, T0),
+    typeCodeFunc(TrueB, Args,T0,ReturnT, T1),
+    typeCodeFunc(FalseB, Args,T1,ReturnT, T).
+/*typeStatement(for(i, 5+6, 7-9, [gvLet(mult, T, iplus(X,Y))]), T1).*/
+typeStatementFunc(for(Name, CodeS, CodeE, Code),Args,Tc,ReturnT, T):- 
+    atom(Name), 
+    (member(Name, Args) ->
+    append(Tc, [int], T2);
+    T2 = Tc),
+    typeExpFunc(CodeS,Args,T2,ReturnT1, T1),
+    typeExpFunc(CodeE,Args,T1,ReturnT1, T0),
+    is_list(Code),
+    typeCodeFunc(Code, Args,T0,ReturnT, T).
+/*typeStatement(gfLet(hi, [2.2,4.5,c], [exp(2.2+4.5)]), T1).*/
+typeStatementFunc(exp(Code),Args,Tc,ReturnT, T):-
+    typeExpFunc(Code,Args,Tc,ReturnT, T).
+/*typeStatementFunc(letin(Name, T, CodeE, Code),Args, unit):- 
+    atom(Name), 
+    typeExp(Code, T),
+    bType(T).*/ /*store in local*/
+
+
+
+/*float type*/
+typeExpFunc(X,_Args,Tc,float, T) :-
+    float(X),
+    T = Tc.
+
+/*int type*/
+typeExpFunc(X,_Args,Tc,int, T) :-
+    integer(X),
+    T = Tc.
+
+/*bool type*/
+typeExpFunc(X,Args,Tc,bool, T) :-
+    typeBoolExpFunc(X, Args, Tc,_ReturnT, T).
+
+typeExpFunc(Fct,ArgsIn,Tc,ReturnT, T):-
+    \+ var(Fct), /* make sure Fct is not a variable */ 
+    \+ atom(Fct), /* or an atom */
+    functor(Fct, Fname, _Nargs), /* ensure we have a functor */
+    !, /* if we make it here we do not try anything else */
+    Fct =.. [Fname|Args], /* get list of arguments */
+    append(Args, [ReturnT], FType), /* make it loook like a function signature */
+    functionType(Fname, TArgs), /* get type of arguments from definition */
+    typeExpListFunc(FType,ArgsIn,Tc, ReturnT,T,TArgs). /* recurisvely match types */
+
+/* propagate types */
+typeExpFunc(T,_Args,_Tc,_ReturnT, T).
+
+/* list version to allow function mathine */
+typeExpListFunc([],_Args,Tc,_ReturnT, T, []):- T = Tc.
+typeExpListFunc([_Hin],Args,Tc,ReturnT,T, [Hout]):-
+    %typeExp(Hin, Hout),
+    ReturnT = Hout,
+    typeExpListFunc([],Args, Tc, ReturnT, T, []). /* recurse */
+typeExpListFunc([Hin|Tin],Args,Tc,ReturnT,T, [Hout|Tout]):-
+    %typeExp(Hin, Hout),
+    (member(Hin, Args) ->
+    append(Tc, [Hout], T0);
+    T0 = Tc),
+    %delete(Args, Hin, Args2),
+    typeExpListFunc(Tin,Args, T0, ReturnT1, T, Tout),
+    ReturnT = ReturnT1. /* recurse */
+
+
+typeBoolExpFunc(true, _Args, Tc,bool, T):- T = Tc.
+typeBoolExpFunc(false, _Args, Tc,bool, T):- T = Tc. 
+typeBoolExpFunc( X >= Y, Args, Tc,bool, T) :-
+    (member(X, Args) ->
+    append(Tc, [int], T0);
+    T0 = Tc),
+    (member(Y, Args) ->
+    append(T0, [int], T);
+    T = T0).
+typeBoolExpFunc(X < Y, Args, Tc,bool, T) :- 
+    (member(X, Args) ->
+    append(Tc, [int], T0);
+    T0 = Tc),
+    (member(Y, Args) ->
+    append(T0, [int], T);
+    T = T0).
+typeBoolExpFunc(X > Y, Args, Tc,bool, T) :- 
+    (member(X, Args) ->
+    append(Tc, [int], T0);
+    T0 = Tc),
+    (member(Y, Args) ->
+    append(T0, [int], T);
+    T = T0).
+typeBoolExpFunc( X =< Y, Args, Tc,bool, T) :- 
+     (member(X, Args) ->
+    append(Tc, [int], T0);
+    T0 = Tc),
+    (member(Y, Args) ->
+    append(T0, [int], T);
+    T = T0).
+typeBoolExpFunc( X == Y, Args, Tc,bool, T) :- 
+     (member(X, Args) ->
+     append(Tc, [int], T0);
+    T0 = Tc),
+    (member(Y, Args) ->
+    append(T0, [int], T);
+    T = T0).
+typeBoolExpFunc( not(X), Args, Tc,bool, T ) :- 
+     (member(X, Args) ->
+    append(Tc, [bool], T);
+    T = Tc).
+typeBoolExpFunc( X \== Y, Args, Tc,bool, T) :- 
+     (member(X, Args) ->
+    append(Tc, [int], T0);
+    T0 = Tc),
+    (member(Y, Args) ->
+    append(T0, [int], T);
+    T = T0).
+typeBoolExpFunc( X ; Y, Args, Tc,bool, T) :- 
+    (member(X, Args) ->
+    append(Tc, [bool], T0);
+    T0 = Tc),
+    (member(Y, Args) ->
+    append(T0, [bool], T);
+    T = T0).
+typeBoolExpFunc( X , Y, Args, Tc,bool, T) :- 
+    (member(X, Args) ->
+    append(Tc, [bool], T0);
+    T0 = Tc),
+    (member(Y, Args) ->
+    append(T0, [bool], T);
+    T = T0).
