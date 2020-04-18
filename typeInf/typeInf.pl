@@ -1,8 +1,19 @@
 :- dynamic 
     gvar/2.
+:- dynamic 
+    localVar/2.
 /* match functions by unifying with arguments 
     and infering the result
 */
+/*global var*/
+typeExp(X, T) :-
+    gvar(X, T),
+    not(is_list(T)).
+
+/*local var*/
+typeExp(X, T) :-
+    localVar(X, T).
+
 /*float type*/
 typeExp(X, float) :-
     float(X).
@@ -113,27 +124,38 @@ typeStatement(if(Cond, TrueB, FalseB), T) :-
     typeCode(TrueB, T),
     typeCode(FalseB, T).
 /*typeStatement(for(i, 5+6, 7-9, [gvLet(mult, T, iplus(X,Y))]), T1).*/
-typeStatement(for(Name, CodeS, CodeE, Code), T):- /*local var?*/
+typeStatement(for(Name, CodeS, CodeE, Code), T):- 
     atom(Name), 
     typeExp(CodeS, T1),
     typeExp(CodeE, T1), 
     hasInt(T1),
+    asserta(localVar(Name,T1)),
     is_list(Code),
-    typeCode(Code, T).
+    typeCode(Code, T),
+    deleteLocalVars().
 /*typeStatement(exp(2+4),T).*/
 typeStatement(exp(Code), T):-
     typeExp(Code, T),
     bType(T).
-typeStatement(letin(Name, T, CodeE, Code), unit):- /*function and var LOCAL*/
+/*typeStatement(letin(a, T1, 2+5, [exp(a+6)]),T).*/
+/*typeCode([gvLet(mult, T2, 2+7),exp(mult + 9) ,gfLet(hi, [a,b], [for(i, 2, 5, [letin(c, T3, 2+5, [exp(a+c)])])]), exp(9 < 3), hi(2,mult), letin(a, T1, 2+5, [exp(a+6)])], T).*/
+typeStatement(letin(Name, T1, CodeE, Code), T):- /*function and var LOCAL*/
     atom(Name), 
-    typeExp(Code, T),
-    bType(T). /*store in local*/
+    typeExp(CodeE, T1),
+    bType(T1),
+    asserta(localVar(Name,T1)),
+    is_list(Code),
+    typeCode(Code, T),
+    deleteLocalVars(). /*store in local*/
 
 /* Code is simply a list of statements. The type is 
     the type of the last statement 
 */
 /*typeCode([gfLet(hi, [a,b,c], [gvLet(mult, T, (2+5)), exp(2+4)]), exp(9 < 3), gfLet(hi, [a,b], [gvLet(mult, T, (2+5)), exp(5 < 9)])], T1).*/
-typeCode([S], T):-typeStatement(S, T).
+/*typeCode([gfLet(hi, [a,b], [for(i, 2, 5, [exp(a+b)])]), exp(9 < 3), hi(2.2,5.6)], T1).*/
+/*typeCode([gfLet(hi, [a,b], [for(i, 2, 5, [exp(a+b)])]), exp(9 < 3), hi(2.2,5.6), letin(a, T1, 2+5, [exp(a+6)])], T).*/
+/*typeCode([gvLet(mult, T2, 2+7),exp(mult + 9) ,gfLet(hi, [a,b], [for(i, 2, 5, [letin(c, T3, 2+5, [exp(a+b)])])]), exp(9 < 3), hi(2,mult), letin(a, T1, hi(9,mult), [exp(a+6)])], T).*/
+typeCode([S], T):- typeStatement(S, T).
 typeCode([S, S2|Code], T):-
     typeStatement(S,_T),
     typeCode([S2|Code], T).
@@ -176,7 +198,9 @@ bType([H|T]):- bType(H), bType(T).
     variables. Best wy to do this is in your top predicate
 */
 
-deleteGVars():-retractall(gvar), asserta(gvar(_X,_Y):-false()).
+deleteGVars():-retractall(gvar(_,_)), asserta(gvar(_X,_Y):-false()).
+
+deleteLocalVars():-retractall(localVar(_,_)), asserta(localVar(_X,_Y):-false()).
 
 /*  builtin functions
     Each definition specifies the name and the 
@@ -218,6 +242,7 @@ functionType(Name, Args) :-
 % This gets wiped out but we have it here to make the linter happy
 gvar(_, _) :- false().
 
+localVar(_, _) :- false().
 
 typeCodeFunc([], _Args,Tc,_ReturnT, T):- T = Tc.
 typeCodeFunc([S], Args,Tc,ReturnT, T):- 
@@ -241,18 +266,34 @@ typeStatementFunc(for(Name, CodeS, CodeE, Code),Args,Tc,ReturnT, T):-
     T2 = Tc),
     typeExpFunc(CodeS,Args,T2,ReturnT1, T1),
     typeExpFunc(CodeE,Args,T1,ReturnT1, T0),
+    asserta(localVar(Name,int)),
     is_list(Code),
-    typeCodeFunc(Code, Args,T0,ReturnT, T).
+    typeCodeFunc(Code, Args,T0,ReturnT, T),
+    deleteLocalVars().
 /*typeStatement(gfLet(hi, [2.2,4.5,c], [exp(2.2+4.5)]), T1).*/
 typeStatementFunc(exp(Code),Args,Tc,ReturnT, T):-
     typeExpFunc(Code,Args,Tc,ReturnT, T).
-/*typeStatementFunc(letin(Name, T, CodeE, Code),Args, unit):- 
+/*typeStatement(letin(a, T1, 2+5, [exp(a+6)]),T).*/
+typeStatementFunc(letin(Name,T1, CodeE, Code),Args,Tc,ReturnT, T):- /*function and var LOCAL*/
     atom(Name), 
-    typeExp(Code, T),
-    bType(T).*/ /*store in local*/
+    typeExpFunc(CodeE,Args,Tc,T1, T0),
+    bType(T1),
+    asserta(localVar(Name,T1)),
+    is_list(Code),
+    typeCodeFunc(Code,Args,T0,ReturnT, T),
+    deleteLocalVars(). /*store in local*/
 
 
+/*global var*/
+typeExp(X,_Args,Tc,ReturnT, T) :-
+    gvar(X, ReturnT),
+    not(is_list(ReturnT)),
+    T=Tc.
 
+/*local var*/
+typeExp(X,_Args,Tc,ReturnT, T) :-
+    localVar(X, ReturnT),
+    T=Tc.
 /*float type*/
 typeExpFunc(X,_Args,Tc,float, T) :-
     float(X),
