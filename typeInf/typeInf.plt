@@ -9,58 +9,95 @@
 */
 
 % tests for typeExp
-test(typeExp_iplus) :- 
-    typeExp(iplus(int,int), int).
-    
-test(typeExp_fplus) :-
-    typeExp(fplus(float,float), float).
+test(typeExp_add) :-
+    typeExp(+(int,int), int).
 
-test(typeExp_iminus) :-
-    typeExp(iminus(int, int), int).
+test(typeExp_add_F, [fail]) :- 
+    typeExp(+(int, int), float).
 
-test(typeExp_fminus) :-
-    typeExp(fminus(float, float), float).
+% Should fail
+test(typeExp_add_F, [fail]) :- 
+    typeExp(+(int, int), float).
 
-test(typeExp_imult) :-
-    typeExp(imult(int,int), int). 
+test(typeExp_add_F2, [fail]) :-
+    typeExp(+(float, float), int).
 
-test(typeExp_fmult) :-
-    typeExp(fmult(float,float), float). 
+test(typeExp_sub) :- 
+    typeExp(-(int, int), int). 
 
-test(typeExp_idiv) :- 
-    typeExp(idiv(int, int), int). 
+% Should fail
+test(typeExp_sub_F, [fail]) :- 
+    typeExp(-(int, int), float).
 
-test(typeExp_fdiv) :- 
-    typeExp(fdiv(float, float), float). 
+test(typeExp_sub_F2, [fail]) :-
+    typeExp(-(float, float), int).
+
+test(typeExp_mult) :-
+    typeExp(*(int, int), int). 
+
+% Should fail
+test(typeExp_mult_F, [fail]) :- 
+    typeExp(*(int, int), float).
+
+test(typeExp_mult_F2, [fail]) :-
+    typeExp(*(float, float), int).
+
+test(typeExp_div) :-
+    typeExp(/(int,int), int).
+
+% Should fail
+test(typeExp_div_F, [fail]) :- 
+    typeExp(/(int, int), float).
+
+test(typeExp_div_F2, [fail]) :-
+    typeExp(/(float, float), int).
+
+test(typeExp_fToInt) :-
+    typeExp(fToInt(float), int).
+
+test(typeExp_fToInt, [fail]) :-
+    typeExp(fToInt(float), float).
+
+test(typeExp_itToFloat) :- 
+    typeExp(iToFloat(int), float). 
+
+test(typeExp_itToFloat, [fail]) :- 
+    typeExp(iToFloat(int), int).
+
+/*test(typeExp_print) :- 
+    typeExp(print(X), X).*/
+
+
+
 
 % this test should fail
 test(typeExp_iplus_F, [fail]) :-
     typeExp(iplus(int, int), float).
 
-test(typeExp_iplus_T, [true(T == int)]) :-
-    typeExp(iplus(int, int), T).
+/*test(typeExp_iplus_T, [true(T == int)]) :-
+    typeExp(iplus(int, int), T).*/
 
 
 % NOTE: use nondet as option to test if the test is nondeterministic
 
 % test for statement with state cleaning
-test(typeStatement_gvar, [nondet, true(T == int)]) :- % should succeed with T=int
+/*test(typeStatement_gvar, [nondet, true(T == int)]) :- % should succeed with T=int
     deleteGVars(), /* clean up variables */
     typeStatement(gvLet(v, T, iplus(X, Y)), unit),
     assertion(X == int), assertion( Y == int), % make sure the types are int
-    gvar(v, int). % make sure the global variable is defined
+    gvar(v, int). % make sure the global variable is defined*/
 
 % same test as above but with infer 
-test(infer_gvar, [nondet]) :-
+/*test(infer_gvar, [nondet]) :-
     infer([gvLet(v, T, iplus(X, Y))], unit),
     assertion(T==int), assertion(X==int), assertion(Y=int),
-    gvar(v,int).
+    gvar(v,int).*/
 
 % test custom function with mocked definition
-test(mockedFct, [nondet]) :-
+/*test(mockedFct, [nondet]) :-
     deleteGVars(), % clean up variables since we cannot use infer
     asserta(gvar(my_fct, [int, float])), % add my_fct(int)-> float to the gloval variables
     typeExp(my_fct(X), T), % infer type of expression using or function
-    assertion(X==int), assertion(T==float). % make sure the types infered are correct
+    assertion(X==int), assertion(T==float). % make sure the types infered are correct*/
 
 :-end_tests(typeInf).
