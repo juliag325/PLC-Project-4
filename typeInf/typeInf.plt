@@ -64,10 +64,47 @@ test(typeExp_itToFloat) :-
 test(typeExp_itToFloat, [fail]) :- 
     typeExp(iToFloat(int), int).
 
-/*test(typeExp_print) :- 
-    typeExp(print(X), X).*/
+test(typeExp_typeInt, [nondet]) :- 
+    typeExp(3, int). 
 
+test(typeExp_typeInt_F, [fail]) :- 
+    typeExp(3, float). 
 
+test(typeExp_typeFloat, [nondet]) :- 
+    typeExp(3.2, float).
+
+test(typeExp_typeFloat, [fail]) :- 
+    typeExp(3.2, int).
+
+test(typeBoolExp) :-
+    true.
+
+test(typeBoolExp, [fail]) :- 
+    false.
+
+test(typeExp_bool_1, [nondet, true]) :- 
+    typeBoolExp(2 < 3).
+
+test(typeExp_bool_1, [nondet, true]) :- 
+    typeBoolExp(-2 < 3).
+
+test(typeExp_bool_2, [nondet, true]) :-
+    typeBoolExp(3 > 2).
+
+test(typeExp_bool_2, [nondet, true]) :-
+    typeBoolExp(-3 > -4).
+
+test(typeExp_bool_3, [nondet, true]) :-
+    typeBoolExp(3 == 3).
+
+test(typeBoolExp_bool_4, [nondet, true]) :- 
+    typeBoolExp(3 =< 3).
+
+test(typeBoolExp_bool_5, [nondet, true]) :- 
+    typeBoolExp(3 =< 5).
+
+test(typeBoolExp_bool_div, [nondet, true]) :- 
+    typeBoolExp(4 \== 2).
 
 
 % this test should fail
