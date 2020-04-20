@@ -61,6 +61,10 @@ hasAdd(int).
 /* predicate to infer types for boolean expressions */
 typeBoolExp(true).
 typeBoolExp(false). 
+typeBoolExp(X):-
+    localVar(X, bool).
+typeBoolExp(X):-
+    gvar(X, bool).
 typeBoolExp( X >= Y) :-
     typeExp(X, T),
     typeExp(Y, T),

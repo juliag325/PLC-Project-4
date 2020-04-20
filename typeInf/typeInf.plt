@@ -81,23 +81,48 @@ test(typeExp_iplus_F, [fail]) :-
 % NOTE: use nondet as option to test if the test is nondeterministic
 
 % test for statement with state cleaning
-/*test(typeStatement_gvar, [nondet, true(T == int)]) :- % should succeed with T=int
+test(typeStatement_gvar, [nondet, true(T == float)]) :- % should succeed with T=int
     deleteGVars(), /* clean up variables */
-    typeStatement(gvLet(v, T, iplus(X, Y)), unit),
-    assertion(X == int), assertion( Y == int), % make sure the types are int
-    gvar(v, int). % make sure the global variable is defined*/
+    typeStatement(gvLet(v, T, 1.2+3.4), unit),
+    gvar(v, float). % make sure the global variable is defined
 
 % same test as above but with infer 
-/*test(infer_gvar, [nondet]) :-
-    infer([gvLet(v, T, iplus(X, Y))], unit),
-    assertion(T==int), assertion(X==int), assertion(Y=int),
-    gvar(v,int).*/
+test(infer_gvar, [nondet]) :-
+    infer([gvLet(v, T, 2+3)], unit),
+    assertion(T==int),
+    gvar(v,int).
+
+% either float or int
+test(infer_gfunc, [nondet]) :-
+    infer([gfLet(hi, [a,b], [a+b])], [T|Ts]),
+    assertion([T|Ts]==[T,T,T]),
+    gvar(hi,[T,T,T]).
+
+test(infer_gvlet_exp_gflet_func_letin, [nondet]) :-
+    infer([gvLet(mult, T2, 2+7),exp(mult + 9) ,gfLet(hi, [a,b], [for(i, 2, 5, [letin(c, T3, 2+5, [exp(a+b)])])]), exp(9 < 3), hi(2,mult), letin(a, T1, hi(9,mult), [exp(a+6)])], T),
+    assertion(T2==int),
+    gvar(mult, int),
+    assertion(T3==int),
+    gvar(hi, [int,int,int]),
+    assertion(T1==int),
+    assertion(T==int).
+
+test(infer_gflet_float, [nondet]) :-
+    infer([gfLet(hi, [a,b], [for(i, 2, 5, [exp(a+b)])]), exp(9 < 3), hi(2.2,5.6)], T),
+    gvar(hi, [float,float,float]),
+    assertion(T==float).
+
+test(infer, [nondet]) :-
+    infer([letin(a, T1, 2 < 3, [if(a, [exp(2+9)], [letin(b, T2, 2-9, [exp(b*7)])])])],T),
+    assertion(T1 == bool),
+    assertion(T2 == int),
+    assertion(T == int).
 
 % test custom function with mocked definition
-/*test(mockedFct, [nondet]) :-
+test(mockedFct, [nondet]) :-
     deleteGVars(), % clean up variables since we cannot use infer
     asserta(gvar(my_fct, [int, float])), % add my_fct(int)-> float to the gloval variables
     typeExp(my_fct(X), T), % infer type of expression using or function
-    assertion(X==int), assertion(T==float). % make sure the types infered are correct*/
+    assertion(X==int), assertion(T==float). % make sure the types infered are correct
 
 :-end_tests(typeInf).
