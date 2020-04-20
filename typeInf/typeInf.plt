@@ -185,7 +185,7 @@ test(infer_for_function, [nondet]) :-
     gvar(hi, [int, int, int]),
     assertion(T == int).
 
-test(infer, [nondet]) :-
+test(infer_globalVarPassIntoFunction, [nondet]) :-
     infer([gvLet(b, T1, true), gvLet(a, T2, 5 =< 9), gfLet(hi, [a,b], [letin(c, T3, (b ; a), [exp(not(c))])]), hi(a, b)],T),
     assertion(T1 == bool),
     gvar(b, bool),
