@@ -7,23 +7,28 @@
 */
 /*global var*/
 typeExp(X, T) :-
+    \+ var(X),
     gvar(X, T),
     not(is_list(T)).
 
 /*local var*/
 typeExp(X, T) :-
+    \+ var(X),
     localVar(X, T).
 
 /*float type*/
 typeExp(X, float) :-
+    \+ var(X),
     float(X).
 
 /*int type*/
 typeExp(X, int) :-
+    \+ var(X),
     integer(X).
 
 /*bool type*/
 typeExp(X, bool) :-
+    \+ var(X),
     typeBoolExp(X).
 
 typeExp(Fct, T):-

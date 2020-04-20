@@ -149,11 +149,53 @@ test(infer_gflet_float, [nondet]) :-
     gvar(hi, [float,float,float]),
     assertion(T==float).
 
-test(infer, [nondet]) :-
+test(infer_letin_if, [nondet]) :-
     infer([letin(a, T1, 2 < 3, [if(a, [exp(2+9)], [letin(b, T2, 2-9, [exp(b*7)])])])],T),
     assertion(T1 == bool),
     assertion(T2 == int),
     assertion(T == int).
+
+test(infer_multGvLet, [nondet]) :-
+    infer([gvLet(b, T1, true),gvLet(y, T2, 5+6), gvLet(x, T3, 7+y), gvLet(z, T4, 6.9+0.9), for(i, y, x, [exp(x+y), letin(f, T5, 7.8/5.6, [exp(f*z), exp(f < 7.8), exp(z =< f)])])],T),
+    assertion(T1 == bool),
+    gvar(b, bool),
+    assertion(T2 == int),
+    gvar(y, int),
+    assertion(T3 == int),
+    gvar(x, int),
+    assertion(T4 == float),
+    gvar(z, float),
+    assertion(T5 == float),
+    assertion(T == bool).
+
+test(infer_if_for_print, [nondet]) :-
+    infer([if(5 \== 7, [print('hi')] , [for(i, 5, 10, [print('bye')])])],T),
+    assertion(T == unit).
+
+test(infer_functionWithinFunction, [nondet]) :-
+    infer([gfLet(hi, [a,b], [for(i, 2, 5, [letin(c, T1, 2+5, [exp(a<b)])])]), gfLet(bye, [x,y], [if(x ; y, [hi(3,4)], [hi(7,8)])]), bye(false, true)],T),
+    assertion(T1 == int),
+    gvar(hi, [int, int, bool]),
+    gvar(bye, [bool, bool, bool]),
+    assertion(T == bool).
+
+test(infer_for_function, [nondet]) :-
+    infer([gfLet(hi, [a,b], [letin(c, T1, a+b, [exp(1+c)])]), for(i, hi(3,4), hi(9,10), [exp(i * hi(i,9))])], T),
+    assertion(T1 == int),
+    gvar(hi, [int, int, int]),
+    assertion(T == int).
+
+test(infer, [nondet]) :-
+    infer([gvLet(b, T1, true), gvLet(a, T2, 5 =< 9), gfLet(hi, [a,b], [letin(c, T3, (b ; a), [exp(not(c))])]), hi(a, b)],T),
+    assertion(T1 == bool),
+    gvar(b, bool),
+    assertion(T2 == bool),
+    gvar(a, bool),
+    assertion(T3 == bool),
+    gvar(hi, [bool, bool, bool]),
+    assertion(T == bool).
+
+
 
 % test custom function with mocked definition
 test(mockedFct, [nondet]) :-
