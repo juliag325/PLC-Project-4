@@ -172,6 +172,58 @@ test(typeStatement, [nondet]) :-
     typeExp(3, T), 
     assertion(T == int).
 
+test(hasComparison) :- 
+    hasComparison(int).
+
+test(hasComparison) :- 
+    hasComparison(float).
+
+test(hasComparison) :- 
+    hasComparison(string).
+
+test(hasComparison, [fail]) :-
+    hasComparison(unit).
+
+test(hasBoolean) :- 
+    hasBoolean(bool).
+
+test(hasBoolean, [fail]) :- 
+    hasBoolean(float).
+
+test(hasBoolean, [fail]) :- 
+    hasBoolean(int).
+
+test(hasBoolean, [fail]) :- 
+    hasBoolean(unit).
+
+test(hasInt) :- 
+    hasInt(int).
+
+test(hasInt, [fail]) :- 
+    hasInt(float).
+
+test(hasInt, [fail]) :- 
+    hasInt(unit).
+
+test(hasInt, [fail]) :- 
+    hasInt(bool).
+
+test(hasAdd) :- 
+    hasAdd(int).
+
+test(hasAdd) :- 
+    hasAdd(float).
+
+test(hasAdd, [fail]) :- 
+    hasAdd(bool).
+
+test(typeExpList) :-
+    typeExpList([], []).
+
+test(bType) :- 
+    bType(int). 
+
+
 % NOTE: use nondet as option to test if the test is nondeterministic
 
 % test for statement with state cleaning
