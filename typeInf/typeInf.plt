@@ -217,11 +217,41 @@ test(hasAdd) :-
 test(hasAdd, [fail]) :- 
     hasAdd(bool).
 
-test(typeExpList) :-
-    typeExpList([], []).
+test(typeExpList, [nondet]) :-
+    typeExpList([3,3,T],[int, int, int]), 
+    assertion(T == int).
+
+test(typeExpList, [nondet]) :-
+    typeExpList([3.2,3.4,T],[float, float, float]), 
+    assertion(T == float).
+
+test(typeExpList, [nondet]) :-
+    typeExpList([3.2,3.4,T],[float, float, int]), 
+    assertion(T == int).
 
 test(bType) :- 
-    bType(int). 
+    bType(int).
+
+test(bType) :- 
+    bType(float).
+
+test(bType) :- 
+    bType(string).
+
+test(bType) :- 
+    bType(unit).
+
+test(bType) :- 
+    bType(bool).
+
+test(typeStatement, [nondet]) :- 
+    typeStatement(gvLet(v, T, 1.2+3.4), unit),
+    assertion(T == float).
+
+test(typeStatement, [nondet]) :- 
+    typeStatement(gvLet(v, T, 2+5), unit),
+    assertion(T == int).
+
 
 
 % NOTE: use nondet as option to test if the test is nondeterministic
