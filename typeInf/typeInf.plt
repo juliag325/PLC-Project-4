@@ -10,10 +10,8 @@
 
 % tests for typeExp
 test(typeExp_add) :-
-    typeExp(+(int,int), int).
-
-test(typeExp_add_F, [fail]) :- 
-    typeExp(+(int, int), float).
+    typeExp(+(int,int), T),
+    assertion(T == int).
 
 % Should fail
 test(typeExp_add_F, [fail]) :- 
@@ -22,8 +20,12 @@ test(typeExp_add_F, [fail]) :-
 test(typeExp_add_F2, [fail]) :-
     typeExp(+(float, float), int).
 
+test(typeExp_add_F, [fail]) :- 
+    typeExp(+(int, float), int).
+
 test(typeExp_sub) :- 
-    typeExp(-(int, int), int). 
+    typeExp(-(int, int), T),
+    assertion(T == int).
 
 % Should fail
 test(typeExp_sub_F, [fail]) :- 
@@ -32,9 +34,14 @@ test(typeExp_sub_F, [fail]) :-
 test(typeExp_sub_F2, [fail]) :-
     typeExp(-(float, float), int).
 
-test(typeExp_mult) :-
-    typeExp(*(int, int), int). 
 
+test(typeExp_sub_F3, [fail]) :- 
+    typeExp(-(int, float), int).
+
+test(typeExp_mult) :-
+    typeExp(*(int, int), T),
+    assertion(T == int). 
+  
 % Should fail
 test(typeExp_mult_F, [fail]) :- 
     typeExp(*(int, int), float).
@@ -42,8 +49,12 @@ test(typeExp_mult_F, [fail]) :-
 test(typeExp_mult_F2, [fail]) :-
     typeExp(*(float, float), int).
 
+test(typeExp_mult_F3, [fail]) :- 
+    typeExp(*(int, float), int).
+
 test(typeExp_div) :-
-    typeExp(/(int,int), int).
+    typeExp(/(int,int), T), 
+    assertion(T == int).
 
 % Should fail
 test(typeExp_div_F, [fail]) :- 
@@ -52,26 +63,37 @@ test(typeExp_div_F, [fail]) :-
 test(typeExp_div_F2, [fail]) :-
     typeExp(/(float, float), int).
 
+test(typeExp_div_F3, [fail]) :- 
+    typeExp(+(int, float), int).
+
 test(typeExp_fToInt) :-
-    typeExp(fToInt(float), int).
+    typeExp(fToInt(float), T),
+    assertion(T == int).
+
+test(typeExp_fToInt, [nondet]) :-
+    typeExp(fToInt(3.4), T),
+    assertion(T == int).
 
 test(typeExp_fToInt, [fail]) :-
     typeExp(fToInt(float), float).
 
 test(typeExp_itToFloat) :- 
-    typeExp(iToFloat(int), float). 
+    typeExp(iToFloat(int), T), 
+    assertion(T == float).
 
 test(typeExp_itToFloat, [fail]) :- 
     typeExp(iToFloat(int), int).
 
 test(typeExp_typeInt, [nondet]) :- 
-    typeExp(3, int). 
+    typeExp(3, T), 
+    assertion(T == int).
 
 test(typeExp_typeInt_F, [fail]) :- 
-    typeExp(3, float). 
+    typeExp(3, float).
 
 test(typeExp_typeFloat, [nondet]) :- 
-    typeExp(3.2, float).
+    typeExp(3.2, T),
+    assertion(T == float).
 
 test(typeExp_typeFloat, [fail]) :- 
     typeExp(3.2, int).
@@ -83,29 +105,60 @@ test(typeBoolExp, [fail]) :-
     false.
 
 test(typeExp_bool_1, [nondet, true]) :- 
-    typeBoolExp(2 < 3).
+    typeBoolExp(2 < 3),
+    typeExp(2, T),
+    typeExp(3, T),
+    assertion(T == int).
 
 test(typeExp_bool_1, [nondet, true]) :- 
-    typeBoolExp(-2 < 3).
+    typeBoolExp(-2 < 3),
+    typeExp(-2, T),
+    typeExp(3, T),
+    assertion(T == int).
+
 
 test(typeExp_bool_2, [nondet, true]) :-
-    typeBoolExp(3 > 2).
+    typeBoolExp(3 > 2),
+     typeExp(3, T),
+    typeExp(2, T),
+    assertion(T == int).
 
 test(typeExp_bool_2, [nondet, true]) :-
-    typeBoolExp(-3 > -4).
+    typeBoolExp(-3 > -4),
+     typeExp(-3, T),
+    typeExp(-4, T),
+    assertion(T == int).
+
+test(typeExp_bool_2, [nondet, true]) :-
+    typeBoolExp(-3.2 < 4.5), 
+    typeExp(-3.2, T),
+    typeExp(4.5, T),
+    assertion(T == float).
 
 test(typeExp_bool_3, [nondet, true]) :-
-    typeBoolExp(3 == 3).
+    typeBoolExp(3 == 3),
+    typeExp(3, T),
+    assertion(T == int).
 
 test(typeBoolExp_bool_4, [nondet, true]) :- 
-    typeBoolExp(3 =< 3).
+    typeBoolExp(3 =< 3),
+    typeExp(3, T),
+    assertion(T == int).
+
+test(typeBoolExp_bool_4, [nondet, true]) :- 
+    typeBoolExp(5.6 =< 5.7),
+    typeExp(5.6, T),
+    typeExp(5.7, T),
+    assertion(T == float).
 
 test(typeBoolExp_bool_5, [nondet, true]) :- 
-    typeBoolExp(3 =< 5).
-
+    typeBoolExp(3 =< 5),
+    typeExp(3, T),
+    typeExp(5, T),
+    assertion(T == int).
+    
 test(typeBoolExp_bool_div, [nondet, true]) :- 
     typeBoolExp(4 \== 2).
-
 
 % this test should fail
 test(typeExp_iplus_F, [fail]) :-
@@ -114,6 +167,10 @@ test(typeExp_iplus_F, [fail]) :-
 /*test(typeExp_iplus_T, [true(T == int)]) :-
     typeExp(iplus(int, int), T).*/
 
+% type statement 
+test(typeStatement, [nondet]) :- 
+    typeExp(3, T), 
+    assertion(T == int).
 
 % NOTE: use nondet as option to test if the test is nondeterministic
 
