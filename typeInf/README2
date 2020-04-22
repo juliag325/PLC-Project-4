@@ -26,7 +26,7 @@ Members: Sindy Wu and Julia Aiello
 
 
 
-## Tasks that were implemented: 
+## Tasks that were implemented (OCaml): 
     1. Basic functions (ftype)
     2. statement types (typeStatements)
         a. global variables 
@@ -34,4 +34,4 @@ Members: Sindy Wu and Julia Aiello
         c. computing expressions 
         d. if statements 
         f. for statements 
-        g. code blocks. (using ;)
+        g. code blocks. (typeCode since everything can be considered a code block/has a ; at the end)

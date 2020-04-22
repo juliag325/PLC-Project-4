@@ -164,6 +164,7 @@ typeStatement(letin(Name, T1, CodeE, Code), T):- /*function and var LOCAL*/
 /*typeCode([gfLet(hi, [a,b], [for(i, 2, 5, [exp(a+b)])]), exp(9 < 3), hi(2.2,5.6)], T1).*/
 /*typeCode([gfLet(hi, [a,b], [for(i, 2, 5, [exp(a+b)])]), exp(9 < 3), hi(2.2,5.6), letin(a, T1, 2+5, [exp(a+6)])], T).*/
 /*typeCode([gvLet(mult, T2, 2+7),exp(mult + 9) ,gfLet(hi, [a,b], [for(i, 2, 5, [letin(c, T3, 2+5, [exp(a+b)])])]), exp(9 < 3), hi(2,mult), letin(a, T1, hi(9,mult), [exp(a+6)])], T).*/
+%Code Block
 typeCode([S], T):- typeStatement(S, T).
 typeCode([S, S2|Code], T):-
     typeStatement(S,_T),

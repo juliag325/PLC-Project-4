@@ -160,15 +160,11 @@ test(typeBoolExp_bool_5, [nondet, true]) :-
 test(typeBoolExp_bool_div, [nondet, true]) :- 
     typeBoolExp(4 \== 2).
 
-% this test should fail
-test(typeExp_iplus_F, [fail]) :-
-    typeExp(iplus(int, int), float).
-
 /*test(typeExp_iplus_T, [true(T == int)]) :-
     typeExp(iplus(int, int), T).*/
 
 % type statement 
-test(typeStatement, [nondet]) :- 
+test(typeExp, [nondet]) :- 
     typeExp(3, T), 
     assertion(T == int).
 
@@ -246,14 +242,79 @@ test(bType) :-
 
 test(typeStatement, [nondet]) :- 
     typeStatement(gvLet(v, T, 1.2+3.4), unit),
-    assertion(T == float).
+    assertion(T == float),
+    gvar(v, float).
 
 test(typeStatement, [nondet]) :- 
     typeStatement(gvLet(v, T, 2+5), unit),
+    assertion(T == int),
+    gvar(v, int).
+
+test(typeStatement, [nondet]) :- 
+    typeStatement(gvLet(v, T, true), unit),
+    assertion(T == bool),
+    gvar(v, bool).
+
+test(typeStatement, [nondet]) :-
+    typeStatement(1+2, T),
     assertion(T == int).
 
+%int or float addition
+test(typeStatement, [nondet]) :-
+    typeStatement(gfLet(hi, [a,b], [exp(a+b)]), [T|Ts]),
+    assertion([T|Ts] == [T,T,T]),
+    gvar(hi, [T,T,T]).
 
+test(typeStatement, [nondet]) :-
+    typeStatement(gfLet(hi, [a,b], [exp(a<b)]), T),
+    assertion(T == [int,int,bool]),
+    gvar(hi, [int,int,bool]).
 
+test(typeStatement, [nondet]) :-
+    typeStatement(if((3 < 10),[exp(2*3)],[exp(4*8)]), T),
+    assertion(T == int).
+
+test(typeStatement, [fail]) :-
+    typeStatement(if((3 +10),[exp(2*3)],[exp(4*8)]), _T).
+
+test(typeStatement, [nondet]) :-
+    typeStatement(for(i, 5+6, 7-9, [letin(c, T1, 2.4+5.5, [exp(2.3+c)])]), T),
+    assertion(T1 == float),
+    \+ localVar(c, float),
+    assertion(T == float).
+
+test(typeStatement, [fail]) :-
+    typeStatement(for(i, 5<7, 7-9, [letin(c, _T1, 2.4+5.5, [exp(2.3+c)])]), _T).
+
+test(typeStatement, [nondet]) :-
+    typeStatement(exp(2+4),T),
+    assertion(T == int).
+
+test(typeStatement, [nondet]) :-
+    typeStatement(exp(2.5/4.7),T),
+    assertion(T == float).
+
+test(typeStatement, [nondet]) :-
+    typeStatement(exp(2<4),T),
+    assertion(T == bool).
+
+test(typeStatement, [nondet]) :-
+    typeStatement(letin(a, T1, 2+5, [exp(a+6)]),T),
+    assertion(T1 == int),
+    \+ localVar(a, int),
+    assertion(T == int).
+
+test(typeStatement, [nondet]) :-
+    typeStatement(letin(a, T1, 2.6+5.6, [exp(a+6.6)]),T),
+    assertion(T1 == float),
+    \+ localVar(a, float),
+    assertion(T == float).
+
+test(typeStatement, [nondet]) :-
+    typeStatement(letin(a, T1, 2<5, [if(a, [exp(2+8)], [exp(2*8)])]),T),
+    assertion(T1 == bool),
+    \+ localVar(a, bool),
+    assertion(T == int).
 % NOTE: use nondet as option to test if the test is nondeterministic
 
 % test for statement with state cleaning
@@ -263,6 +324,7 @@ test(typeStatement_gvar, [nondet, true(T == float)]) :- % should succeed with T=
     gvar(v, float). % make sure the global variable is defined
 
 % test for code 
+%CODE BLOCK TEST
 test(typeCode_single, [nondet]) :-
     typeCode([gvLet(v, T, 2+3)], unit),
     assertion(T==int),
